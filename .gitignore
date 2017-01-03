@@ -31,3 +31,11 @@
 # Debug files
 *.dSYM/
 *.su
+
+# Code::Blocks
+
+bin/
+obj/
+*.depend
+*.layout
+
