@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <math.h>
 #include <wiringPi.h>
+#include <wiringShift.h>
 
 // Define pins connected to the 74HC595.
 #define SD   0  // serial data input
@@ -14,9 +15,6 @@ init_pins(int pin, ...);
 
 void
 send_pulse(int pin);
-
-void
-write_byte(int pin, unsigned char byte);
 
 int
 main(void)
@@ -32,7 +30,8 @@ main(void)
 
     do
     {
-        write_byte(SD, (int) pow(2, exp));
+        shiftOut(SD, SHCP, LSBFIRST, (uint8_t) pow(2, exp));
+        send_pulse(STCP);
         printf("Delay: %d ms\n", delayms);
         delay(delayms);
         exp += direction;
@@ -50,7 +49,8 @@ main(void)
     }
     while (delayms <= 1000);
 
-    write_byte(SD, 0x00);
+    shiftOut(SD, SHCP, LSBFIRST, 0x00);
+    send_pulse(STCP);
 
     return EXIT_SUCCESS;
 }
@@ -77,28 +77,5 @@ void
 send_pulse(int pin)
 {
     digitalWrite(pin, 0);
-    delay(1);
     digitalWrite(pin, 1);
-}
-
-void
-write_byte(int pin, unsigned char byte)
-{
-    int i;
-    int pow2;
-
-    for (i=0; i<8; i++)
-    {
-        pow2 = (int) pow(2, i);
-        if ((byte & pow2) == pow2)
-        {
-            digitalWrite(pin, 1);
-        }
-        else
-        {
-            digitalWrite(pin, 0);
-        }
-        send_pulse(SHCP);
-    }
-    send_pulse(STCP);
 }
