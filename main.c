@@ -1,3 +1,4 @@
+/* Controls 8 LEDs using a 74HC595 shift register. */
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -5,14 +6,16 @@
 #include <wiringPi.h>
 #include <wiringShift.h>
 
-// Define pins connected to the 74HC595.
+// Define pins connected to the 74HC595 (wiringPi numbering).
 #define SD   0  // serial data input
 #define STCP 1  // storage register clock pulse
 #define SHCP 2  // shift register clock pulse
 
+/* Sets the pin(s) to output and the initial value to 0. */
 void
 init_pins(int pin, ...);
 
+/* Sends a pulse to the pin. */
 void
 send_pulse(int pin);
 
@@ -22,18 +25,24 @@ main(void)
     signed char exp = 0;
     char direction = 1;
     int delayms = 50;
-    int delayinc = 25;
+    int delayinc = 50;
 
     wiringPiSetup();
 
     init_pins(SD, STCP, SHCP);
 
+    /* Turn on the LEDs one by one in Knight Rider fashion.
+       Increase the delay gradually between each step. */
     do
     {
+        // Shift out a byte to the 74HC595.
         shiftOut(SD, SHCP, LSBFIRST, (uint8_t) pow(2, exp));
+        // Send a pulse on the storage register clock line
+        // so that the byte shows up on the output.
         send_pulse(STCP);
-        printf("Delay: %d ms\n", delayms);
+
         delay(delayms);
+
         exp += direction;
         if (exp == 8)
         {
@@ -49,12 +58,14 @@ main(void)
     }
     while (delayms <= 1000);
 
+    // Turn off all the LEDs.
     shiftOut(SD, SHCP, LSBFIRST, 0x00);
     send_pulse(STCP);
 
     return EXIT_SUCCESS;
 }
 
+/* Sets the pin(s) to output and the initial value to 0. */
 void
 init_pins(int pin, ...)
 {
@@ -73,9 +84,10 @@ init_pins(int pin, ...)
     va_end(ap);
 }
 
+/* Sends a pulse to the pin. */
 void
 send_pulse(int pin)
 {
-    digitalWrite(pin, 0);
     digitalWrite(pin, 1);
+    digitalWrite(pin, 0);
 }
